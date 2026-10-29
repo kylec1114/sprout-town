@@ -1,2 +1,2 @@
-import {openBakery} from './bakery.js';
-const hud=document.getElementById('hud');if(hud&&!document.getElementById('chapter8Button')){const b=document.createElement('button');b.id='chapter8Button';b.textContent='第八關 · 烘焙工作坊';b.onclick=openBakery;(hud.querySelector('.hud-actions')||hud).appendChild(b)}
+import {openBakery,openPacking} from './workshops.js';
+const hud=document.getElementById('hud');if(hud){for(const[id,text,action]of[['chapter8Button','第八關 · 烘焙工作坊',openBakery],['chapter9Button','第九關 · 最後一袋',openPacking]]){if(document.getElementById(id))continue;const b=document.createElement('button');b.id=id;b.textContent=text;b.onclick=action;b.style.cssText='display:block;margin-top:8px;font-size:12px;text-align:left';(hud.querySelector('.hud-actions')||hud).appendChild(b)}}
