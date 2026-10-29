@@ -1,6 +1,7 @@
 node_modules/
 dist/
 android/
+public/audio/*.wav
 *.jks
 *.keystore
 .env*
