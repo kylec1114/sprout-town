@@ -8,27 +8,48 @@ permissions:
   issues: write
 jobs:
   apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout source
+        uses: actions/checkout@v5
+      - name: Set up project Node 22
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - uses: actions/setup-java@v4
+          package-manager-cache: false
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
-      - run: npm install
-      - run: node --check src/main.js && node --check src/audio.js && node --check src/characters.js && node --check src/story.js
-      - run: npm run build
-      - run: test -s dist/audio/warm-window.wav
-      - run: npx cap add android && npx cap sync android
-      - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug --no-daemon
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
+      - name: Print tool versions
+        run: node --version && npm --version && java -version
+      - name: Install web dependencies
+        run: npm install
+      - name: Check all JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(find src scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
+      - name: Generate music and build web game
+        run: npm run build
+      - name: Verify bundled music
+        run: test -s dist/audio/warm-window.wav
+      - name: Generate Android project
+        run: npx cap add android
+      - name: Sync bundled game into Android
+        run: npx cap sync android
+      - name: Compile debug APK
+        run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug --no-daemon --stacktrace
       - name: Name APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk sprout-town-debug.apk
-      - uses: actions/upload-artifact@v4
+      - name: Upload downloadable APK artifact
+        uses: actions/upload-artifact@v6
         with:
           name: sprout-town-debug-apk
           path: sprout-town-debug.apk
@@ -40,7 +61,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           TAG="apk-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          gh release create "$TAG" sprout-town-debug.apk --target "$GITHUB_SHA" --prerelease --title "Testing APK $TAG" --notes "Healing chapter 1. Bundled generated music. Debug build; not device-tested or a production release."
+          gh release create "$TAG" sprout-town-debug.apk --target "$GITHUB_SHA" --prerelease --title "Testing APK $TAG" --notes "Five healing chapter prototypes. Bundled generated music. Debug build; not device-tested or a production release."
           echo "APK_TAG=$TAG" >> "$GITHUB_ENV"
       - name: Notify Kyle after APK is published
         env:
@@ -48,4 +69,4 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           URL="https://github.com/$GH_REPO/releases/tag/$APK_TAG"
-          gh issue create --title "APK ready: $APK_TAG" --body "@kylec1114 新測試 APK 已編譯並上傳：$URL 。下載 Assets 下的 sprout-town-debug.apk。這是 debug 測試版，未經手機遊玩驗收；請先確認版本與來源。"
+          gh issue create --title "APK ready: $APK_TAG" --body "@kylec1114 新測試 APK 已編譯並上傳：$URL 。下載 Assets 下的 sprout-town-debug.apk。這是五關 debug 原型，未經手機遊玩驗收；請先確認版本與來源。"
