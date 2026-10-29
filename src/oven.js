@@ -1,0 +1,3 @@
+export const fresh=()=>({rise:0,crust:0,dry:0});
+export function bake(s,temp,vent,dt){dt=Math.max(0,Math.min(dt,.1));temp=Math.max(150,Math.min(220,temp));vent=Math.max(0,Math.min(1,vent));return{rise:Math.min(1,s.rise+dt*(.027+(temp-150)*.0007)*(1-.2*vent)),crust:Math.min(1,s.crust+dt*(.008+(temp-150)*.00065)*(1+.35*vent)),dry:Math.min(1,s.dry+dt*(.003+(temp-150)*.00013+.011*vent))}}
+export function result(s){if(s.rise<.78)return{ok:false,text:'切開仍然太密，未發好。可以繼續焗。'};if(s.crust>.76)return{ok:false,text:'表面焗得深咗。呢爐留作店內試味，可以重新試。'};if(s.dry>.52)return{ok:false,text:'水分走得太多，唔係想要嘅軟身口感。可以重試。'};if(s.crust<.4)return{ok:false,text:'麵包已發起，表面仍然偏白。可以再畀少少火。'};return{ok:true,text:'外皮淡金，切開仍然鬆軟。可以留起聽朝嗰兩個。'}}
